@@ -3,7 +3,7 @@ package main
 templ Index(datetime string) {
 	<html>
 		<head>
-			<meta http-equiv="refresh" content="2"/>
+			<meta http-equiv="refresh" content="5"/>
 			<script type="module" src="https://cdn.jsdelivr.net/gh/starfederation/datastar@1.0.0-RC.6/bundles/datastar.js"></script>
 		</head>
 		<body>
@@ -19,11 +19,15 @@ templ Index(datetime string) {
 
 	.topbar {}
 </style>
-	<script>
-	console.log(new Date().toString());)
-</script>
 }
 
 templ Change(datetime string) {
-	<h2 id="change" data-init="@get('/time')">{ datetime }</h2>
+	<div
+		data-signals:date="new Date()"
+		data-signals:tzoffset="$date.getTimezoneOffset()"
+		data-signals:tz="Intl.DateTimeFormat().resolvedOptions().timeZone"
+	>
+		<p data-text="$tz"></p>
+		<h3 id="change" data-init="@post('/time')">{ datetime }</h3>
+	</div>
 }
