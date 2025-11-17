@@ -1,33 +1,69 @@
 package main
 
-templ Index(datetime string) {
+templ Layout() {
 	<html>
 		<head>
-			<meta http-equiv="refresh" content="5"/>
+			<meta http-equiv="refresh" content="1"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<script type="module" src="https://cdn.jsdelivr.net/gh/starfederation/datastar@1.0.0-RC.6/bundles/datastar.js"></script>
 		</head>
 		<body>
-			<div class="topbar">
-				<h1>Time to do things</h1>
-				@Change(datetime)
-			</div>
+			{ children... }
 		</body>
 	</html>
 	<style>
 	@import "https://unpkg.com/open-props";
 	@import "https://unpkg.com/open-props/normalize.min.css";
-
-	.topbar {}
 </style>
+}
+
+templ Index(datetime string) {
+	@Layout() {
+		<div>
+			<h1>Time to do things</h1>
+			@Change(datetime)
+			@Alarms([]Alarm{
+				{Name: "Expedition farming", AsiaManila: "10:00PM", EuropeLondon: "2:00PM"},
+				{Name: "Loot farming", AsiaManila: "12:00PM", EuropeLondon: "4:00PM"},
+			})
+		</div>
+	}
 }
 
 templ Change(datetime string) {
 	<div
-		data-signals:date="new Date()"
-		data-signals:tzoffset="$date.getTimezoneOffset()"
+		data-signals:datetime="Date()"
 		data-signals:tz="Intl.DateTimeFormat().resolvedOptions().timeZone"
+		data-on-interval="$datetime = Date()"
 	>
-		<p data-text="$tz"></p>
-		<h3 id="change" data-init="@post('/time')">{ datetime }</h3>
+		<p>Your Timezone: <span data-text="$tz"></span></p>
+		<p>Your Time: <span data-text="$datetime"></span></p>
 	</div>
+}
+
+type Alarm struct {
+	Name         string
+	AsiaManila   string
+	EuropeLondon string
+}
+
+templ Alarms(alarms []Alarm) {
+	<table data-signals:alarms="">
+		<thead>
+			<tr>
+				<th>Name</th>
+				<th>Asia/Manila</th>
+				<th>Great Britain/London</th>
+			</tr>
+		</thead>
+		<tbody>
+			for _, alarm := range alarms {
+				<tr>
+					<td>{ alarm.Name }</td>
+					<td>{ alarm.AsiaManila }</td>
+					<td>{ alarm.EuropeLondon }</td>
+				</tr>
+			}
+		</tbody>
+	</table>
 }

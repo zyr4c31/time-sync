@@ -9,32 +9,41 @@ import (
 )
 
 type Store struct {
-	Date         string `json:"date"`
-	UTCOffsetMin int    `json:"tzoffset"`
-	TZ           string `json:"tz"`
+	Date string `json:"date"`
+	TZ   string `json:"tz"`
 }
 
 func main() {
 	http.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
-		formatString := "January 02, 2006 03:04:05 PM"
-		datetime := time.Now().Local().Format(formatString)
-		component := Index(datetime)
+		date := time.Now().Local()
+		component := Index(date.String())
 		component.Render(r.Context(), w)
 	})
 
 	http.HandleFunc("POST /time", func(w http.ResponseWriter, r *http.Request) {
 		store := &Store{}
-		_ = datastar.ReadSignals(r, store)
+		if err := datastar.ReadSignals(r, store); err != nil {
+			fmt.Printf("err: %v\n", err)
+		}
+		fmt.Printf("store.Date: %v\n", store.Date)
 		fmt.Printf("store.TZ: %v\n", store.TZ)
-		offsetSeconds := store.UTCOffsetMin * -60
-		userTimeZone := time.FixedZone("user", offsetSeconds)
 
-		t := time.Now().In(userTimeZone)
-		fmt.Printf("t: %v\n", t)
-		change := Change(t.Local().String())
+		location, err := time.LoadLocation(store.TZ)
+		if err != nil {
+			fmt.Printf("err: %v\n", err)
+		}
+
 		sse := datastar.NewSSE(w, r)
-		sse.PatchElementTempl(change)
+		if err := sse.PatchElementTempl(Change(location.String())); err != nil {
+			fmt.Printf("err: %v\n", err)
+		}
 	})
 
+	http.HandleFunc("GET /alarms", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Printf("r: %v\n", r)
+	})
+
+	addr := "http://localhost:8080"
+	fmt.Printf("addr: %v\n", addr)
 	http.ListenAndServe(":8080", nil)
 }
